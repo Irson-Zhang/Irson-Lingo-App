@@ -1,0 +1,1369 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LingoQuest - Professional Language Learning Platform</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for Icons -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <!-- Google Fonts: Nunito -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              nunito: ["Nunito", "sans-serif"],
+            },
+            colors: {
+              duoGreen: "#58cc02",
+              duoGreenHover: "#46a302",
+              duoGreenDark: "#58a700",
+              duoBlue: "#1cb0f6",
+              duoBlueHover: "#1899d6",
+              duoYellow: "#ffc800",
+              duoYellowHover: "#e6b400",
+              duoRed: "#ff4b4b",
+              duoRedHover: "#ea2b2b",
+              duoPurple: "#ce82ff",
+              duoPurpleHover: "#b15ce8",
+              duoDark: "#3c3c3c",
+              duoLight: "#f7f7f7",
+              duoGray: "#afafaf",
+              duoBorder: "#e5e5e5",
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      body {
+        font-family: "Nunito", sans-serif;
+        background-color: #ffffff;
+        color: #3c3c3c;
+        user-select: none;
+      }
+      /* Custom scrollbar */
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 4px;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #d1d5db;
+        border-radius: 4px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #9ca3af;
+      }
+      @keyframes shake {
+        0%,
+        100% {
+          transform: translateX(0);
+        }
+        20%,
+        60% {
+          transform: translateX(-6px);
+        }
+        40%,
+        80% {
+          transform: translateX(6px);
+        }
+      }
+      .animate-shake {
+        animation: shake 0.4s ease-in-out;
+      }
+      @keyframes pop {
+        0% {
+          transform: scale(0.9);
+          opacity: 0;
+        }
+        100% {
+          transform: scale(1);
+          opacity: 1;
+        }
+      }
+      .animate-pop {
+        animation: pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+      }
+    </style>
+  </head>
+  <body class="bg-white min-h-screen flex flex-col md:flex-row">
+    <script>
+      // Global Application State
+      const state = {
+        currentTab: "learn", // 'learn', 'leaderboard', 'shop', 'profile', 'practice'
+        selectedLanguage: "Spanish",
+        languages: {
+          Spanish: { code: "es", flag: "🇪🇸", name: "Spanish", xp: 1250 },
+          French: { code: "fr", flag: "🇫🇷", name: "French", xp: 820 },
+          Japanese: { code: "ja", flag: "🇯🇵", name: "Japanese", xp: 450 },
+          German: { code: "de", flag: "🇩🇪", name: "German", xp: 300 },
+          Italian: { code: "it", flag: "🇮🇹", name: "Italian", xp: 150 },
+        },
+        streak: 7,
+        gems: 450,
+        hearts: 5,
+        maxHearts: 5,
+        soundEnabled: true,
+        activeLesson: null,
+        lessonProgress: {
+          Spanish: {
+            0: "completed",
+            1: "completed",
+            2: "current",
+            3: "locked",
+            4: "locked",
+            5: "locked",
+          },
+          French: {
+            0: "completed",
+            1: "current",
+            2: "locked",
+            3: "locked",
+            4: "locked",
+            5: "locked",
+          },
+          Japanese: {
+            0: "current",
+            1: "locked",
+            2: "locked",
+            3: "locked",
+            4: "locked",
+            5: "locked",
+          },
+          German: {
+            0: "current",
+            1: "locked",
+            2: "locked",
+            3: "locked",
+            4: "locked",
+            5: "locked",
+          },
+          Italian: {
+            0: "current",
+            1: "locked",
+            2: "locked",
+            3: "locked",
+            4: "locked",
+            5: "locked",
+          },
+        },
+      };
+
+      // Skill Tree Nodes Database
+      const skillTreeNodes = [
+        {
+          id: 0,
+          title: "Basics 1",
+          icon: "fa-book-open",
+          desc: "Learn essential greetings and core pronouns.",
+        },
+        {
+          id: 1,
+          title: "Phrases",
+          icon: "fa-comments",
+          desc: "Common everyday conversational phrases.",
+        },
+        {
+          id: 2,
+          title: "Food",
+          icon: "fa-utensils",
+          desc: "Vocabulary for meals, drinks, and dining out.",
+        },
+        {
+          id: 3,
+          title: "Animals",
+          icon: "fa-dog",
+          desc: "Names of common animals and wildlife.",
+        },
+        {
+          id: 4,
+          title: "Travel",
+          icon: "fa-plane",
+          desc: "Navigating airports, hotels, and asking directions.",
+        },
+        {
+          id: 5,
+          title: "Grammar",
+          icon: "fa-shapes",
+          desc: "Verb conjugations and sentence structure.",
+        },
+      ];
+
+      // Lesson Questions Bank per Skill & Language
+      const lessonQuestions = {
+        "Basics 1": [
+          {
+            type: "multiple_choice",
+            prompt: "Translate this word:",
+            target: "Hola",
+            audioText: "Hola",
+            options: ["Hello", "Goodbye", "Please", "Thank you"],
+            correct: "Hello",
+          },
+          {
+            type: "listen_choose",
+            prompt: "Listen and select the correct translation:",
+            target: "Buenos días",
+            audioText: "Buenos días",
+            options: [
+              "Good morning",
+              "Good night",
+              "Good afternoon",
+              "Goodbye",
+            ],
+            correct: "Good morning",
+          },
+          {
+            type: "match_pairs",
+            prompt: "Tap the matching pairs:",
+            pairs: [
+              { left: "Yo", right: "I" },
+              { left: "Tú", right: "You" },
+              { left: "Sí", right: "Yes" },
+              { left: "No", right: "No" },
+            ],
+          },
+          {
+            type: "fill_blank",
+            prompt:
+              "Complete the sentence: '___, ¿cómo estás?' (Hello, how are you?)",
+            target: "Hola",
+            options: ["Hola", "Adiós", "Gracias", "Por favor"],
+            correct: "Hola",
+          },
+        ],
+        Phrases: [
+          {
+            type: "multiple_choice",
+            prompt: "What does this mean?",
+            target: "Por favor",
+            audioText: "Por favor",
+            options: ["Please", "Thank you", "Excuse me", "Sorry"],
+            correct: "Please",
+          },
+          {
+            type: "multiple_choice",
+            prompt: "Translate:",
+            target: "Muchas gracias",
+            audioText: "Muchas gracias",
+            options: [
+              "Thank you very much",
+              "You are welcome",
+              "Good morning",
+              "See you later",
+            ],
+            correct: "Thank you very much",
+          },
+          {
+            type: "match_pairs",
+            prompt: "Match the phrases:",
+            pairs: [
+              { left: "Por favor", right: "Please" },
+              { left: "Gracias", right: "Thanks" },
+              { left: "Adiós", right: "Goodbye" },
+              { left: "Hola", right: "Hello" },
+            ],
+          },
+        ],
+        Food: [
+          {
+            type: "multiple_choice",
+            prompt: "Translate this word:",
+            target: "Manzana",
+            audioText: "Manzana",
+            options: ["Apple", "Bread", "Water", "Cheese"],
+            correct: "Apple",
+          },
+          {
+            type: "listen_choose",
+            prompt: "Listen and translate:",
+            target: "Agua",
+            audioText: "Agua",
+            options: ["Water", "Milk", "Juice", "Coffee"],
+            correct: "Water",
+          },
+          {
+            type: "match_pairs",
+            prompt: "Match the food items:",
+            pairs: [
+              { left: "Pan", right: "Bread" },
+              { left: "Agua", right: "Water" },
+              { left: "Leche", right: "Milk" },
+              { left: "Carne", right: "Meat" },
+            ],
+          },
+        ],
+      };
+    </script>
+
+    <!-- Sidebar Navigation for Desktop -->
+    <aside
+      class="hidden md:flex flex-col w-64 border-r border-duoBorder h-screen sticky top-0 bg-white p-4 justify-between z-20"
+    >
+      <div>
+        <!-- Logo -->
+        <div class="flex items-center space-x-3 px-3 py-4 mb-2">
+          <div
+            class="w-10 h-10 rounded-xl bg-duoGreen flex items-center justify-center text-white font-black text-2xl shadow-md"
+          >
+            <i class="fa-solid fa-feather-pointed"></i>
+          </div>
+          <span class="text-2xl font-black text-duoGreen tracking-wider"
+            >LingoQuest</span
+          >
+        </div>
+
+        <!-- Nav Links -->
+        <nav class="space-y-1">
+          <button
+            onclick="switchTab('learn')"
+            id="nav-learn"
+            class="w-full flex items-center space-x-4 px-4 py-3 rounded-xl font-bold text-sm tracking-wider uppercase transition-all duration-200 text-duoGreen bg-duoGreen/10 border-2 border-duoGreen"
+          >
+            <i class="fa-solid fa-house text-xl w-6"></i>
+            <span>Learn</span>
+          </button>
+          <button
+            onclick="switchTab('practice')"
+            id="nav-practice"
+            class="w-full flex items-center space-x-4 px-4 py-3 rounded-xl font-bold text-sm tracking-wider uppercase transition-all duration-200 text-duoGray hover:bg-gray-100"
+          >
+            <i class="fa-solid fa-dumbbell text-xl w-6"></i>
+            <span>Practice</span>
+          </button>
+          <button
+            onclick="switchTab('leaderboard')"
+            id="nav-leaderboard"
+            class="w-full flex items-center space-x-4 px-4 py-3 rounded-xl font-bold text-sm tracking-wider uppercase transition-all duration-200 text-duoGray hover:bg-gray-100"
+          >
+            <i class="fa-solid fa-shield-halved text-xl w-6"></i>
+            <span>Leaderboard</span>
+          </button>
+          <button
+            onclick="switchTab('shop')"
+            id="nav-shop"
+            class="w-full flex items-center space-x-4 px-4 py-3 rounded-xl font-bold text-sm tracking-wider uppercase transition-all duration-200 text-duoGray hover:bg-gray-100"
+          >
+            <i class="fa-solid fa-store text-xl w-6"></i>
+            <span>Shop</span>
+          </button>
+          <button
+            onclick="switchTab('profile')"
+            id="nav-profile"
+            class="w-full flex items-center space-x-4 px-4 py-3 rounded-xl font-bold text-sm tracking-wider uppercase transition-all duration-200 text-duoGray hover:bg-gray-100"
+          >
+            <i class="fa-solid fa-user text-xl w-6"></i>
+            <span>Profile</span>
+          </button>
+        </nav>
+      </div>
+
+      <!-- Language Selector Dropdown in Sidebar -->
+      <div class="relative pt-4 border-t border-duoBorder">
+        <button
+          onclick="toggleLangDropdown()"
+          class="w-full flex items-center justify-between p-3 rounded-xl border-2 border-duoBorder hover:bg-gray-50 transition"
+        >
+          <div class="flex items-center space-x-3">
+            <span id="sidebar-flag" class="text-2xl">🇪🇸</span>
+            <span id="sidebar-lang-name" class="font-bold text-duoDark"
+              >Spanish</span
+            >
+          </div>
+          <i class="fa-solid fa-chevron-down text-duoGray text-sm"></i>
+        </button>
+        <!-- Dropdown Menu -->
+        <div
+          id="lang-dropdown"
+          class="hidden absolute bottom-20 left-4 right-4 bg-white border-2 border-duoBorder rounded-xl shadow-xl overflow-hidden z-30"
+        >
+          <div id="lang-options-list" class="flex flex-col">
+            <!-- Populated via JS -->
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Mobile Bottom Navigation Bar -->
+    <nav
+      class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-duoBorder flex justify-around items-center p-3 z-30 shadow-lg"
+    >
+      <button
+        onclick="switchTab('learn')"
+        id="mob-nav-learn"
+        class="flex flex-col items-center text-duoGreen"
+      >
+        <i class="fa-solid fa-house text-xl"></i>
+        <span class="text-xs font-bold mt-1">Learn</span>
+      </button>
+      <button
+        onclick="switchTab('practice')"
+        id="mob-nav-practice"
+        class="flex flex-col items-center text-duoGray"
+      >
+        <i class="fa-solid fa-dumbbell text-xl"></i>
+        <span class="text-xs font-bold mt-1">Practice</span>
+      </button>
+      <button
+        onclick="switchTab('leaderboard')"
+        id="mob-nav-leaderboard"
+        class="flex flex-col items-center text-duoGray"
+      >
+        <i class="fa-solid fa-shield-halved text-xl"></i>
+        <span class="text-xs font-bold mt-1">Rank</span>
+      </button>
+      <button
+        onclick="switchTab('shop')"
+        id="mob-nav-shop"
+        class="flex flex-col items-center text-duoGray"
+      >
+        <i class="fa-solid fa-store text-xl"></i>
+        <span class="text-xs font-bold mt-1">Shop</span>
+      </button>
+      <button
+        onclick="switchTab('profile')"
+        id="mob-nav-profile"
+        class="flex flex-col items-center text-duoGray"
+      >
+        <i class="fa-solid fa-user text-xl"></i>
+        <span class="text-xs font-bold mt-1">Profile</span>
+      </button>
+    </nav>
+
+    <!-- Main Content Container -->
+    <main
+      class="flex-1 min-h-screen pb-20 md:pb-0 flex flex-col bg-white overflow-y-auto"
+    >
+      <!-- Top Stats HUD (Streak, Gems, Hearts) -->
+      <header
+        class="hidden md:flex justify-between items-center px-8 py-4 border-b border-duoBorder sticky top-0 bg-white/95 backdrop-blur z-10"
+      >
+        <div class="flex items-center space-x-2">
+          <span id="header-lang-flag" class="text-3xl">🇪🇸</span>
+          <span id="header-lang-title" class="font-black text-xl text-duoDark"
+            >Spanish</span
+          >
+        </div>
+        <div class="flex items-center space-x-6">
+          <!-- Streak -->
+          <div class="flex items-center space-x-2 font-black text-orange-500">
+            <i class="fa-solid fa-fire text-2xl animate-bounce"></i>
+            <span id="hud-streak">7</span>
+          </div>
+          <!-- Gems -->
+          <div class="flex items-center space-x-2 font-black text-duoBlue">
+            <i class="fa-solid fa-gem text-2xl"></i>
+            <span id="hud-gems">450</span>
+          </div>
+          <!-- Hearts -->
+          <div class="flex items-center space-x-2 font-black text-duoRed">
+            <i class="fa-solid fa-heart text-2xl"></i>
+            <span id="hud-hearts">5</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- Mobile Top Bar -->
+      <div
+        class="md:hidden flex justify-between items-center p-4 border-b border-duoBorder bg-white"
+      >
+        <div
+          class="flex items-center space-x-2 cursor-pointer"
+          onclick="toggleMobileLangSelector()"
+        >
+          <span id="mob-header-flag" class="text-2xl">🇪🇸</span>
+          <span id="mob-header-title" class="font-black text-duoDark"
+            >Spanish</span
+          >
+          <i class="fa-solid fa-chevron-down text-xs text-duoGray"></i>
+        </div>
+        <div class="flex items-center space-x-4">
+          <div
+            class="flex items-center space-x-1 font-black text-orange-500 text-sm"
+          >
+            <i class="fa-solid fa-fire"></i>
+            <span id="mob-hud-streak">7</span>
+          </div>
+          <div
+            class="flex items-center space-x-1 font-black text-duoBlue text-sm"
+          >
+            <i class="fa-solid fa-gem"></i>
+            <span id="mob-hud-gems">450</span>
+          </div>
+          <div
+            class="flex items-center space-x-1 font-black text-duoRed text-sm"
+          >
+            <i class="fa-solid fa-heart"></i>
+            <span id="mob-hud-hearts">5</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dynamic View Container -->
+      <div
+        id="view-container"
+        class="flex-1 flex flex-col p-4 md:p-8 max-w-4xl mx-auto w-full"
+      >
+        <!-- Rendered dynamically -->
+      </div>
+    </main>
+
+    <!-- Interactive Lesson Modal (Hidden by default) -->
+    <div
+      id="lesson-modal"
+      class="fixed inset-0 bg-white z-50 flex flex-col hidden overflow-y-auto"
+    >
+      <!-- Lesson Top Progress Bar -->
+      <div
+        class="w-full max-w-2xl mx-auto p-4 md:pt-8 flex items-center justify-between"
+      >
+        <button
+          onclick="closeLesson()"
+          class="text-duoGray hover:text-duoDark text-2xl font-bold transition"
+        >
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+        <div class="flex-1 mx-6 bg-duoBorder rounded-full h-4 overflow-hidden">
+          <div
+            id="lesson-progress-bar"
+            class="bg-duoGreen h-full rounded-full transition-all duration-300"
+            style="width: 25%"
+          ></div>
+        </div>
+        <div class="flex items-center space-x-2 text-duoRed font-black text-lg">
+          <i class="fa-solid fa-heart"></i>
+          <span id="lesson-hearts">5</span>
+        </div>
+      </div>
+
+      <!-- Lesson Question Box -->
+      <div
+        class="flex-1 flex flex-col items-center justify-center max-w-xl mx-auto w-full p-4"
+      >
+        <div id="lesson-content-area" class="w-full flex flex-col space-y-6">
+          <!-- Injected dynamically via JS -->
+        </div>
+      </div>
+
+      <!-- Bottom Action Footer -->
+      <div
+        id="lesson-footer"
+        class="border-t border-duoBorder p-4 md:p-6 bg-white flex justify-between items-center max-w-2xl mx-auto w-full"
+      >
+        <button
+          onclick="skipQuestion()"
+          class="px-6 py-3 rounded-2xl font-bold text-duoGray hover:bg-gray-100 uppercase tracking-wider transition"
+        >
+          Skip
+        </button>
+        <button
+          id="lesson-check-btn"
+          onclick="checkAnswer()"
+          disabled
+          class="px-10 py-3 rounded-2xl font-extrabold uppercase tracking-wider bg-duoBorder text-duoGray cursor-not-allowed transition shadow-md"
+        >
+          Check
+        </button>
+      </div>
+    </div>
+
+    <!-- Feedback Toast Overlay -->
+    <div
+      id="feedback-toast"
+      class="fixed bottom-0 left-0 right-0 p-6 transform translate-y-full transition-transform duration-300 z-50 flex items-center justify-between px-8 md:px-32 shadow-2xl"
+    >
+      <div class="flex items-center space-x-4 max-w-3xl mx-auto w-full">
+        <div
+          id="feedback-icon-container"
+          class="w-14 h-14 rounded-full bg-white flex items-center justify-center text-3xl font-black shadow-md"
+        >
+          <i id="feedback-icon" class="fa-solid fa-check text-duoGreen"></i>
+        </div>
+        <div>
+          <h3 id="feedback-title" class="text-2xl font-black text-white">
+            Correct!
+          </h3>
+          <p id="feedback-subtitle" class="text-white font-medium">
+            Keep up the great work!
+          </p>
+        </div>
+        <button
+          id="feedback-next-btn"
+          onclick="nextQuestion()"
+          class="ml-auto px-8 py-3 bg-white font-black rounded-2xl uppercase tracking-wider shadow-lg transition transform hover:scale-105"
+        >
+          Continue
+        </button>
+      </div>
+    </div>
+
+    <script>
+      // --- VIEW RENDERING ENGINE ---
+      function switchTab(tab) {
+        state.currentTab = tab;
+
+        // Update sidebar active states
+        ["learn", "practice", "leaderboard", "shop", "profile"].forEach((t) => {
+          const btn = document.getElementById(`nav-${t}`);
+          const mobBtn = document.getElementById(`mob-nav-${t}`);
+          if (btn) {
+            if (t === tab) {
+              btn.className =
+                "w-full flex items-center space-x-4 px-4 py-3 rounded-xl font-bold text-sm tracking-wider uppercase transition-all duration-200 text-duoGreen bg-duoGreen/10 border-2 border-duoGreen";
+            } else {
+              btn.className =
+                "w-full flex items-center space-x-4 px-4 py-3 rounded-xl font-bold text-sm tracking-wider uppercase transition-all duration-200 text-duoGray hover:bg-gray-100";
+            }
+          }
+          if (mobBtn) {
+            if (t === tab) {
+              mobBtn.className = "flex flex-col items-center text-duoGreen";
+            } else {
+              mobBtn.className = "flex flex-col items-center text-duoGray";
+            }
+          }
+        });
+
+        renderView();
+      }
+
+      function renderView() {
+        const container = document.getElementById("view-container");
+        container.innerHTML = "";
+
+        if (state.currentTab === "learn") {
+          container.innerHTML = renderLearnView();
+        } else if (state.currentTab === "practice") {
+          container.innerHTML = renderPracticeView();
+        } else if (state.currentTab === "leaderboard") {
+          container.innerHTML = renderLeaderboardView();
+        } else if (state.currentTab === "shop") {
+          container.innerHTML = renderShopView();
+        } else if (state.currentTab === "profile") {
+          container.innerHTML = renderProfileView();
+        }
+      }
+
+      // --- LEARN VIEW (Skill Tree) ---
+      function renderLearnView() {
+        const lang = state.selectedLanguage;
+        const progress = state.lessonProgress[lang] || {};
+
+        let html = `
+                <div class="flex flex-col items-center space-y-8 py-4">
+                    <!-- Unit Banner -->
+                    <div class="w-full bg-duoGreen text-white rounded-3xl p-6 flex flex-col md:flex-row justify-between items-center shadow-lg">
+                        <div>
+                            <span class="uppercase tracking-widest font-black text-xs bg-black/25 px-3 py-1 rounded-full">Unit 1 • Foundation</span>
+                            <h2 class="text-3xl font-black mt-2">Master ${lang} Basics</h2>
+                            <p class="text-white/90 font-medium mt-1">Build your foundational vocabulary and grammar skills.</p>
+                        </div>
+                        <button onclick="startLesson(0)" class="mt-4 md:mt-0 bg-white text-duoGreen font-black px-6 py-3 rounded-2xl shadow-md hover:bg-gray-100 transition transform hover:scale-105 uppercase tracking-wider">
+                            Guidebook
+                        </button>
+                    </div>
+
+                    <!-- Skill Tree Path -->
+                    <div class="flex flex-col items-center space-y-12 w-full py-6">
+            `;
+
+        skillTreeNodes.forEach((node, index) => {
+          const status =
+            progress[index] || (index === 0 ? "current" : "locked");
+
+          let btnColor =
+            "bg-duoGray border-gray-400 text-white cursor-not-allowed";
+          let shadowColor = "shadow-gray-300";
+          let iconBg = "bg-gray-400";
+          let ringEffect = "";
+
+          if (status === "completed") {
+            btnColor =
+              "bg-duoYellow border-yellow-600 text-white hover:bg-duoYellowHover cursor-pointer";
+            shadowColor = "shadow-yellow-500/50";
+            iconBg = "bg-yellow-600";
+          } else if (status === "current") {
+            btnColor =
+              "bg-duoGreen border-duoGreenDark text-white hover:bg-duoGreenHover cursor-pointer";
+            shadowColor = "shadow-duoGreen/50";
+            iconBg = "duoGreenDark";
+            ringEffect = "ring-4 ring-duoGreen/30 animate-pulse";
+          }
+
+          // Alternating offsets for Duolingo serpentine path look
+          const offsets = [
+            "translate-x-0",
+            "translate-x-12",
+            "translate-x-0",
+            "-translate-x-12",
+            "translate-x-0",
+            "translate-x-8",
+          ];
+          const offsetClass = offsets[index % offsets.length];
+
+          html += `
+                    <div class="flex flex-col items-center ${offsetClass} relative group">
+                        <!-- Tooltip on hover -->
+                        <div class="absolute -top-12 opacity-0 group-hover:opacity-100 transition bg-duoDark text-white px-3 py-1 rounded-xl text-xs font-bold pointer-events-none whitespace-nowrap shadow-lg">
+                            ${node.title}: ${node.desc}
+                        </div>
+
+                        <button onclick="startLesson(${node.id})" ${status === "locked" ? "disabled" : ""} class="w-20 h-20 rounded-full ${btnColor} ${ringEffect} border-b-8 flex items-center justify-center text-3xl shadow-xl transition transform active:translate-y-2">
+                            <i class="fa-solid ${node.icon}"></i>
+                        </button>
+                        <span class="mt-3 font-extrabold text-sm text-duoDark bg-gray-100 px-4 py-1 rounded-full border border-duoBorder shadow-sm">${node.title}</span>
+                    </div>
+                `;
+        });
+
+        html += `
+                    </div>
+                </div>
+            `;
+        return html;
+      }
+
+      // --- PRACTICE VIEW ---
+      function renderPracticeView() {
+        return `
+                <div class="flex flex-col space-y-6">
+                    <div class="border-b border-duoBorder pb-4">
+                        <h2 class="text-3xl font-black text-duoDark">Practice Hub</h2>
+                        <p class="text-duoGray font-medium">Sharpen your skills, review weak words, and earn extra XP!</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Mistake Review Card -->
+                        <div class="bg-duoRed/10 border-2 border-duoRed/30 rounded-3xl p-6 flex flex-col justify-between shadow-sm hover:shadow-md transition">
+                            <div>
+                                <div class="w-12 h-12 rounded-2xl bg-duoRed text-white flex items-center justify-center text-2xl font-black mb-4">
+                                    <i class="fa-solid fa-heart-crack"></i>
+                                </div>
+                                <h3 class="text-xl font-black text-duoDark">Mistake Review</h3>
+                                <p class="text-duoGray font-medium mt-2">Practice words and sentences you missed in previous lessons to master them.</p>
+                            </div>
+                            <button onclick="startPracticeSession('mistakes')" class="mt-6 w-full py-3 bg-duoRed hover:bg-duoRedHover text-white font-extrabold rounded-2xl shadow-lg transition uppercase tracking-wider">
+                                Review Mistakes
+                            </button>
+                        </div>
+
+                        <!-- Timed Challenge Card -->
+                        <div class="bg-duoYellow/10 border-2 border-duoYellow/30 rounded-3xl p-6 flex flex-col justify-between shadow-sm hover:shadow-md transition">
+                            <div>
+                                <div class="w-12 h-12 rounded-2xl bg-duoYellow text-white flex items-center justify-center text-2xl font-black mb-4">
+                                    <i class="fa-solid fa-bolt"></i>
+                                </div>
+                                <h3 class="text-xl font-black text-duoDark">Lightning Blitz</h3>
+                                <p class="text-duoGray font-medium mt-2">Answer as many rapid-fire questions as you can before the clock runs out!</p>
+                            </div>
+                            <button onclick="startPracticeSession('lightning')" class="mt-6 w-full py-3 bg-duoYellow hover:bg-duoYellowHover text-white font-extrabold rounded-2xl shadow-lg transition uppercase tracking-wider">
+                                Start Blitz
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+      }
+
+      // --- LEADERBOARD VIEW ---
+      function renderLeaderboardView() {
+        const users = [
+          {
+            rank: 1,
+            name: "Sofia_Polyglot",
+            xp: 4820,
+            flag: "🇪🇸",
+            isUser: false,
+          },
+          { rank: 2, name: "AlexLangs", xp: 3950, flag: "🇫🇷", isUser: false },
+          {
+            rank: 3,
+            name: "Yuki_Studios",
+            xp: 3410,
+            flag: "🇯🇵",
+            isUser: false,
+          },
+          {
+            rank: 4,
+            name: "You (LingoUser)",
+            xp: state.languages[state.selectedLanguage].xp,
+            flag: state.languages[state.selectedLanguage].flag,
+            isUser: true,
+          },
+          { rank: 5, name: "Marco_It", xp: 1100, flag: "🇮🇹", isUser: false },
+          { rank: 6, name: "Hans_De", xp: 950, flag: "🇩🇪", isUser: false },
+        ];
+
+        // Sort by XP descending
+        users.sort((a, b) => b.xp - a.xp);
+        // Re-assign ranks
+        users.forEach((u, i) => (u.rank = i + 1));
+
+        let html = `
+                <div class="flex flex-col space-y-6">
+                    <div class="border-b border-duoBorder pb-4 flex items-center justify-between">
+                        <div>
+                            <h2 class="text-3xl font-black text-duoDark">Diamond League</h2>
+                            <p class="text-duoGray font-medium">Top 10 users advance to the Champions tournament!</p>
+                        </div>
+                        <div class="bg-duoYellow/20 text-duoYellow px-4 py-2 rounded-2xl font-black text-sm flex items-center space-x-2">
+                            <i class="fa-solid fa-trophy text-lg"></i>
+                            <span>Week 3</span>
+                        </div>
+                    </div>
+
+                    <div class="bg-white border-2 border-duoBorder rounded-3xl overflow-hidden shadow-sm">
+            `;
+
+        users.forEach((u) => {
+          const bgClass = u.isUser
+            ? "bg-duoGreen/10 border-l-4 border-duoGreen"
+            : "hover:bg-gray-50";
+          html += `
+                    <div class="flex items-center justify-between p-4 border-b border-duoBorder last:border-none ${bgClass}">
+                        <div class="flex items-center space-x-4">
+                            <span class="font-black text-lg w-8 text-center ${u.rank <= 3 ? "text-duoYellow" : "text-duoGray"}">#${u.rank}</span>
+                            <div class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-xl">
+                                ${u.flag}
+                            </div>
+                            <span class="font-bold text-duoDark ${u.isUser ? "text-duoGreen font-black" : ""}">${u.name} ${u.isUser ? "(You)" : ""}</span>
+                        </div>
+                        <span class="font-black text-duoGray">${u.xp} XP</span>
+                    </div>
+                `;
+        });
+
+        html += `
+                    </div>
+                </div>
+            `;
+        return html;
+      }
+
+      // --- SHOP VIEW ---
+      function renderShopView() {
+        return `
+                <div class="flex flex-col space-y-6">
+                    <div class="border-b border-duoBorder pb-4 flex items-center justify-between">
+                        <div>
+                            <h2 class="text-3xl font-black text-duoDark">Lingo Shop</h2>
+                            <p class="text-duoGray font-medium">Spend your earned gems on power-ups and outfits.</p>
+                        </div>
+                        <div class="flex items-center space-x-2 font-black text-duoBlue text-xl bg-duoBlue/10 px-4 py-2 rounded-2xl">
+                            <i class="fa-solid fa-gem"></i>
+                            <span id="shop-gems-count">${state.gems}</span>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Refill Hearts -->
+                        <div class="border-2 border-duoBorder rounded-3xl p-6 flex items-center justify-between shadow-sm hover:shadow-md transition">
+                            <div class="flex items-center space-x-4">
+                                <div class="w-14 h-14 rounded-2xl bg-duoRed text-white flex items-center justify-center text-2xl font-black shadow-md">
+                                    <i class="fa-solid fa-heart"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-black text-lg text-duoDark">Refill Hearts</h4>
+                                    <p class="text-duoGray text-sm font-medium">Get full hearts instantly to keep learning.</p>
+                                </div>
+                            </div>
+                            <button onclick="buyItem('hearts', 50)" class="px-4 py-2 bg-duoBlue hover:bg-duoBlueHover text-white font-extrabold rounded-2xl shadow-md flex items-center space-x-2 transition">
+                                <i class="fa-solid fa-gem text-sm"></i>
+                                <span>50</span>
+                            </button>
+                        </div>
+
+                        <!-- Streak Freeze -->
+                        <div class="border-2 border-duoBorder rounded-3xl p-6 flex items-center justify-between shadow-sm hover:shadow-md transition">
+                            <div class="flex items-center space-x-4">
+                                <div class="w-14 h-14 rounded-2xl bg-orange-500 text-white flex items-center justify-center text-2xl font-black shadow-md">
+                                    <i class="fa-solid fa-snowflake"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-black text-lg text-duoDark">Streak Freeze</h4>
+                                    <p class="text-duoGray text-sm font-medium">Protect your streak if you miss a day.</p>
+                                </div>
+                            </div>
+                            <button onclick="buyItem('freeze', 100)" class="px-4 py-2 bg-duoBlue hover:bg-duoBlueHover text-white font-extrabold rounded-2xl shadow-md flex items-center space-x-2 transition">
+                                <i class="fa-solid fa-gem text-sm"></i>
+                                <span>100</span>
+                            </button>
+                        </div>
+
+                        <!-- Double or Nothing -->
+                        <div class="border-2 border-duoBorder rounded-3xl p-6 flex items-center justify-between shadow-sm hover:shadow-md transition">
+                            <div class="flex items-center space-x-4">
+                                <div class="w-14 h-14 rounded-2xl bg-duoYellow text-white flex items-center justify-center text-2xl font-black shadow-md">
+                                    <i class="fa-solid fa-coins"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-black text-lg text-duoDark">Wager 50 Gems</h4>
+                                    <p class="text-duoGray text-sm font-medium">Maintain a 7-day streak to double your gems back!</p>
+                                </div>
+                            </div>
+                            <button onclick="buyItem('wager', 50)" class="px-4 py-2 bg-duoBlue hover:bg-duoBlueHover text-white font-extrabold rounded-2xl shadow-md flex items-center space-x-2 transition">
+                                <i class="fa-solid fa-gem text-sm"></i>
+                                <span>50</span>
+                            </button>
+                        </div>
+
+                        <!-- VIP Badge -->
+                        <div class="border-2 border-duoBorder rounded-3xl p-6 flex items-center justify-between shadow-sm hover:shadow-md transition">
+                            <div class="flex items-center space-x-4">
+                                <div class="w-14 h-14 rounded-2xl bg-duoPurple text-white flex items-center justify-center text-2xl font-black shadow-md">
+                                    <i class="fa-solid fa-crown"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-black text-lg text-duoDark">VIP Scholar Badge</h4>
+                                    <p class="text-duoGray text-sm font-medium">Display an exclusive gold crown next to your profile.</p>
+                                </div>
+                            </div>
+                            <button onclick="buyItem('vip', 200)" class="px-4 py-2 bg-duoBlue hover:bg-duoBlueHover text-white font-extrabold rounded-2xl shadow-md flex items-center space-x-2 transition">
+                                <i class="fa-solid fa-gem text-sm"></i>
+                                <span>200</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+      }
+
+      // --- PROFILE VIEW ---
+      function renderProfileView() {
+        const lang = state.selectedLanguage;
+        const langData = state.languages[lang];
+
+        return `
+                <div class="flex flex-col space-y-8">
+                    <!-- User Bio Header -->
+                    <div class="flex flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-6 border-2 border-duoBorder rounded-3xl p-8 bg-gray-50 shadow-sm">
+                        <div class="w-24 h-24 rounded-full bg-duoGreen text-white flex items-center justify-center text-4xl font-black shadow-lg">
+                            <i class="fa-solid fa-user-astronaut"></i>
+                        </div>
+                        <div class="flex-1 text-center md:text-left">
+                            <h2 class="text-3xl font-black text-duoDark">LingoUser</h2>
+                            <p class="text-duoGray font-bold">Joined October 2024 • Learning ${lang}</p>
+                        </div>
+                        <button onclick="showNotification('Profile settings saved!')" class="px-6 py-3 border-2 border-duoBorder rounded-2xl font-black text-duoDark hover:bg-gray-100 transition">
+                            Edit Profile
+                        </button>
+                    </div>
+
+                    <!-- Statistics Grid -->
+                    <div>
+                        <h3 class="text-2xl font-black text-duoDark mb-4">Statistics</h3>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div class="border-2 border-duoBorder rounded-2xl p-4 flex flex-col items-center justify-center bg-white shadow-sm">
+                                <i class="fa-solid fa-fire text-orange-500 text-3xl mb-2"></i>
+                                <span class="text-2xl font-black text-duoDark">${state.streak}</span>
+                                <span class="text-xs font-bold text-duoGray uppercase">Day Streak</span>
+                            </div>
+                            <div class="border-2 border-duoBorder rounded-2xl p-4 flex flex-col items-center justify-center bg-white shadow-sm">
+                                <i class="fa-solid fa-bolt text-duoYellow text-3xl mb-2"></i>
+                                <span class="text-2xl font-black text-duoDark">${langData.xp}</span>
+                                <span class="text-xs font-bold text-duoGray uppercase">Total XP</span>
+                            </div>
+                            <div class="border-2 border-duoBorder rounded-2xl p-4 flex flex-col items-center justify-center bg-white shadow-sm">
+                                <i class="fa-solid fa-shield-halved text-duoPurple text-3xl mb-2"></i>
+                                <span class="text-2xl font-black text-duoDark">Diamond</span>
+                                <span class="text-xs font-bold text-duoGray uppercase">Current League</span>
+                            </div>
+                            <div class="border-2 border-duoBorder rounded-2xl p-4 flex flex-col items-center justify-center bg-white shadow-sm">
+                                <i class="fa-solid fa-gem text-duoBlue text-3xl mb-2"></i>
+                                <span class="text-2xl font-black text-duoDark">${state.gems}</span>
+                                <span class="text-xs font-bold text-duoGray uppercase">Total Gems</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Achievements Section -->
+                    <div>
+                        <h3 class="text-2xl font-black text-duoDark mb-4">Achievements</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="border-2 border-duoBorder rounded-2xl p-4 flex items-center space-x-4 bg-white shadow-sm">
+                                <div class="w-12 h-12 rounded-xl bg-duoYellow text-white flex items-center justify-center text-xl font-black">
+                                    <i class="fa-solid fa-fire"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-black text-duoDark">Wildfire</h4>
+                                    <p class="text-xs font-medium text-duoGray">Reach a 7-day streak</p>
+                                </div>
+                            </div>
+                            <div class="border-2 border-duoBorder rounded-2xl p-4 flex items-center space-x-4 bg-white shadow-sm">
+                                <div class="w-12 h-12 rounded-xl bg-duoBlue text-white flex items-center justify-center text-xl font-black">
+                                    <i class="fa-solid fa-bolt"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-black text-duoDark">Sage</h4>
+                                    <p class="text-xs font-medium text-duoGray">Earn 1,000 total XP</p>
+                                </div>
+                            </div>
+                            <div class="border-2 border-duoBorder rounded-2xl p-4 flex items-center space-x-4 bg-white shadow-sm">
+                                <div class="w-12 h-12 rounded-xl bg-duoGreen text-white flex items-center justify-center text-xl font-black">
+                                    <i class="fa-solid fa-medal"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-black text-duoDark">Champion</h4>
+                                    <p class="text-xs font-medium text-duoGray">Finish #1 in Diamond League</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+      }
+
+      // --- LANGUAGE SWITCHING LOGIC ---
+      function toggleLangDropdown() {
+        const dropdown = document.getElementById("lang-dropdown");
+        dropdown.classList.toggle("hidden");
+        renderLangOptions();
+      }
+
+      function renderLangOptions() {
+        const list = document.getElementById("lang-options-list");
+        list.innerHTML = "";
+        for (const [name, data] of Object.entries(state.languages)) {
+          const isSelected = name === state.selectedLanguage;
+          list.innerHTML += `
+                    <button onclick="selectLanguage('${name}')" class="flex items-center justify-between p-3 hover:bg-gray-100 transition ${isSelected ? "bg-duoGreen/10 font-black text-duoGreen" : "text-duoDark font-bold"}">
+                        <div class="flex items-center space-x-3">
+                            <span class="text-xl">${data.flag}</span>
+                            <span>${name}</span>
+                        </div>
+                        ${isSelected ? '<i class="fa-solid fa-check text-duoGreen"></i>' : ""}
+                    </button>
+                `;
+        }
+      }
+
+      function selectLanguage(langName) {
+        state.selectedLanguage = langName;
+        document.getElementById("sidebar-flag").innerText =
+          state.languages[langName].flag;
+        document.getElementById("sidebar-lang-name").innerText = langName;
+        document.getElementById("header-lang-flag").innerText =
+          state.languages[langName].flag;
+        document.getElementById("header-lang-title").innerText = langName;
+        document.getElementById("mob-header-flag").innerText =
+          state.languages[langName].flag;
+        document.getElementById("mob-header-title").innerText = langName;
+
+        document.getElementById("lang-dropdown").classList.add("hidden");
+        renderView();
+      }
+
+      function toggleMobileLangSelector() {
+        // Quick cycle through languages on mobile header click
+        const keys = Object.keys(state.languages);
+        const nextIdx =
+          (keys.indexOf(state.selectedLanguage) + 1) % keys.length;
+        selectLanguage(keys[nextIdx]);
+      }
+    </script>
+
+    <script>
+      let currentLessonData = null;
+      let currentQuestionIndex = 0;
+      let selectedAnswer = null;
+      let matchedPairsState = { selectedLeft: null, matchedCount: 0 };
+
+      function startLesson(skillId) {
+        const node =
+          skillTreeNodes.find((n) => n.id === skillId) || skillTreeNodes[0];
+        const questions =
+          lessonQuestions[node.title] || lessonQuestions["Basics 1"];
+
+        currentLessonData = {
+          skillId: skillId,
+          title: node.title,
+          questions: [...questions],
+        };
+        currentQuestionIndex = 0;
+        state.hearts = Math.max(1, state.hearts);
+
+        document.getElementById("lesson-modal").classList.remove("hidden");
+        renderCurrentQuestion();
+      }
+
+      function startPracticeSession(mode) {
+        currentLessonData = {
+          skillId: 0,
+          title: mode === "mistakes" ? "Mistake Review" : "Lightning Blitz",
+          questions: [
+            ...lessonQuestions["Basics 1"],
+            ...lessonQuestions["Phrases"],
+          ],
+        };
+        currentQuestionIndex = 0;
+        document.getElementById("lesson-modal").classList.remove("hidden");
+        renderCurrentQuestion();
+      }
+
+      function closeLesson() {
+        document.getElementById("lesson-modal").classList.add("hidden");
+        renderView();
+      }
+
+      function renderCurrentQuestion() {
+        if (
+          !currentLessonData ||
+          currentQuestionIndex >= currentLessonData.questions.length
+        ) {
+          finishLesson();
+          return;
+        }
+
+        const q = currentLessonData.questions[currentQuestionIndex];
+        const progressPct =
+          (currentQuestionIndex / currentLessonData.questions.length) * 100;
+        document.getElementById("lesson-progress-bar").style.width =
+          `${progressPct}%`;
+        document.getElementById("lesson-hearts").innerText = state.hearts;
+
+        const contentArea = document.getElementById("lesson-content-area");
+        selectedAnswer = null;
+        resetCheckButton();
+
+        if (q.type === "multiple_choice" || q.type === "listen_choose") {
+          let html = `
+                    <h2 class="text-2xl md:text-3xl font-black text-duoDark">${q.prompt}</h2>
+                `;
+          if (q.type === "listen_choose" || q.audioText) {
+            html += `
+                        <div class="flex justify-center my-4">
+                            <button onclick="speakAudio('${q.audioText}')" class="w-20 h-20 rounded-full bg-duoBlue text-white text-3xl flex items-center justify-center shadow-lg hover:bg-duoBlueHover transition transform hover:scale-105">
+                                <i class="fa-solid fa-volume-high"></i>
+                            </button>
+                        </div>
+                    `;
+          }
+          html += `
+                    <div class="bg-gray-50 border-2 border-duoBorder rounded-2xl p-6 text-center my-4">
+                        <span class="text-3xl font-black text-duoDark">${q.target}</span>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                `;
+          q.options.forEach((opt, idx) => {
+            html += `
+                        <button onclick="selectOption(this, '${opt}')" class="p-4 rounded-2xl border-2 border-duoBorder font-bold text-lg text-duoDark hover:bg-gray-100 transition text-center shadow-sm">
+                            ${opt}
+                        </button>
+                    `;
+          });
+          html += `</div>`;
+          contentArea.innerHTML = html;
+        } else if (q.type === "match_pairs") {
+          matchedPairsState = { selectedLeft: null, matchedCount: 0 };
+          let shuffledRight = [...q.pairs].sort(() => Math.random() - 0.5);
+
+          let html = `
+                    <h2 class="text-2xl font-black text-duoDark">${q.prompt}</h2>
+                    <div class="grid grid-cols-2 gap-6 my-6">
+                        <div class="flex flex-col space-y-3" id="pairs-left-col">
+                `;
+          q.pairs.forEach((p, idx) => {
+            html += `<button onclick="selectPairLeft(this, '${p.left}')" class="p-4 rounded-2xl border-2 border-duoBorder font-extrabold text-duoDark bg-white shadow-sm hover:border-duoBlue transition">${p.left}</button>`;
+          });
+          html += `</div><div class="flex flex-col space-y-3" id="pairs-right-col">`;
+          shuffledRight.forEach((p, idx) => {
+            html += `<button onclick="selectPairRight(this, '${p.right}')" class="p-4 rounded-2xl border-2 border-duoBorder font-extrabold text-duoDark bg-white shadow-sm hover:border-duoBlue transition">${p.right}</button>`;
+          });
+          html += `</div></div>`;
+          contentArea.innerHTML = html;
+        } else if (q.type === "fill_blank") {
+          let html = `
+                    <h2 class="text-2xl font-black text-duoDark">${q.prompt}</h2>
+                    <div class="grid grid-cols-2 gap-4 mt-6">
+                `;
+          q.options.forEach((opt) => {
+            html += `
+                        <button onclick="selectOption(this, '${opt}')" class="p-4 rounded-2xl border-2 border-duoBorder font-bold text-lg text-duoDark hover:bg-gray-100 transition text-center shadow-sm">
+                            ${opt}
+                        </button>
+                    `;
+          });
+          html += `</div>`;
+          contentArea.innerHTML = html;
+        }
+      }
+
+      function selectOption(btn, val) {
+        // Clear selections
+        const buttons = btn.parentNode.querySelectorAll("button");
+        buttons.forEach((b) => {
+          b.classList.remove("border-duoBlue", "bg-duoBlue/10", "text-duoBlue");
+          b.classList.add("border-duoBorder");
+        });
+        // Highlight selected
+        btn.classList.remove("border-duoBorder");
+        btn.classList.add("border-duoBlue", "bg-duoBlue/10", "text-duoBlue");
+        selectedAnswer = val;
+
+        const checkBtn = document.getElementById("lesson-check-btn");
+        checkBtn.disabled = false;
+        checkBtn.className =
+          "px-10 py-3 rounded-2xl font-extrabold uppercase tracking-wider bg-duoGreen hover:bg-duoGreenHover text-white cursor-pointer shadow-lg transition transform hover:scale-105";
+      }
+
+      function resetCheckButton() {
+        const checkBtn = document.getElementById("lesson-check-btn");
+        checkBtn.disabled = true;
+        checkBtn.className =
+          "px-10 py-3 rounded-2xl font-extrabold uppercase tracking-wider bg-duoBorder text-duoGray cursor-not-allowed transition shadow-md";
+      }
+
+      function checkAnswer() {
+        const q = currentLessonData.questions[currentQuestionIndex];
+
+        if (q.type === "match_pairs") {
+          if (matchedPairsState.matchedCount === q.pairs.length) {
+            showFeedback(true, "Great job!");
+          } else {
+            showFeedback(false, "Match all pairs first!");
+          }
+          return;
+        }
+
+        if (!selectedAnswer) return;
+
+        const isCorrect = selectedAnswer === q.correct;
+        if (isCorrect) {
+          showFeedback(true, "Correct!");
+        } else {
+          state.hearts = Math.max(0, state.hearts - 1);
+          document.getElementById("lesson-hearts").innerText = state.hearts;
+          showFeedback(false, `Correct answer: ${q.correct}`);
+        }
+      }
+
+      function showFeedback(isCorrect, message) {
+        const toast = document.getElementById("feedback-toast");
+        const iconContainer = document.getElementById(
+          "feedback-icon-container",
+        );
+        const icon = document.getElementById("feedback-icon");
+        const title = document.getElementById("feedback-title");
+        const subtitle = document.getElementById("feedback-subtitle");
+        const nextBtn = document.getElementById("feedback-next-btn");
+
+        toast.classList.remove("translate-y-full");
+
+        if (isCorrect) {
+          toast.className =
+            "fixed bottom-0 left-0 right-0 p-6 transform transition-transform duration-300 z-50 flex items-center justify-between px-8 md:px-32 shadow-2xl bg-duoGreen";
+          iconContainer.className =
+            "w-14 h-14 rounded-full bg-white flex items-center justify-center text-3xl font-black shadow-md text-duoGreen";
+          icon.className = "fa-solid fa-check text-duoGreen";
+          title.innerText = "Excellent!";
+          subtitle.innerText = message;
+          nextBtn.className =
+            "ml-auto px-8 py-3 bg-white text-duoGreen font-black rounded-2xl uppercase tracking-wider shadow-lg transition transform hover:scale-105";
+        } else {
+          toast.className =
+            "fixed bottom-0 left-0 right-0 p-6 transform transition-transform duration-300 z-50 flex items-center justify-between px-8 md:px-32 shadow-2xl bg-duoRed";
+          iconContainer.className =
+            "w-14 h-14 rounded-full bg-white flex items-center justify-center text-3xl font-black shadow-md text-duoRed animate-shake";
+          icon.className = "fa-solid fa-xmark text-duoRed";
+          title.innerText = "Incorrect";
+          subtitle.innerText = message;
+          nextBtn.className =
+            "ml-auto px-8 py-3 bg-white text-duoRed font-black rounded-2xl uppercase tracking-wider shadow-lg transition transform hover:scale-105";
+        }
+      }
+
+      function nextQuestion() {
+        const toast = document.getElementById("feedback-toast");
+        toast.classList.add("translate-y-full");
+
+        currentQuestionIndex++;
+        if (
+          currentLessonData &&
+          currentQuestionIndex < currentLessonData.questions.length
+        ) {
+          renderCurrentQuestion();
+        } else {
+          finishLesson();
+        }
+      }
+
+      function finishLesson() {
+        document.getElementById("lesson-modal").classList.add("hidden");
+
+        // Reward XP & Gems
+        const lang = state.selectedLanguage;
+        state.languages[lang].xp += 15;
+        state.gems += 20;
+
+        // Unlock next skill node
+        const skillId = currentLessonData.skillId;
+        if (state.lessonProgress[lang]) {
+          state.lessonProgress[lang][skillId] = "completed";
+          if (state.lessonProgress[lang][skillId + 1] === "locked") {
+            state.lessonProgress[lang][skillId + 1] = "current";
+          }
+        }
+
+        // Show celebratory reward alert banner
+        showNotification(`Lesson Completed! +15 XP and +20 Gems earned! 🎉`);
+        renderView();
+      }
+
+      function skipQuestion() {
+        nextQuestion();
+      }
+
+      // --- WEB SPEECH API PRONUNCIATION ---
+      function speakAudio(text) {
+        if ("speechSynthesis" in window) {
+          const utterance = new SpeechSynthesisUtterance(text);
+          utterance.lang =
+            state.languages[state.selectedLanguage].code || "es-ES";
+          window.speechSynthesis.speak(utterance);
+        } else {
+          showNotification(`Pronunciation: "${text}"`);
+        }
+      }
+
+      // --- SHOP & NOTIFICATIONS ---
+      function buyItem(itemType, cost) {
+        if (state.gems >= cost) {
+          state.gems -= cost;
+          if (itemType === "hearts") {
+            state.hearts = state.maxHearts;
+          }
+          showNotification(`Successfully purchased ${itemType}!`);
+          renderView();
+        } else {
+          showNotification(`Not enough gems! Complete more lessons.`);
+        }
+      }
+
+      function showNotification(msg) {
+        const notif = document.createElement("div");
+        notif.className =
+          "fixed top-6 left-1/2 transform -translate-x-1/2 bg-duoDark text-white font-black px-6 py-3 rounded-2xl shadow-2xl z-50 animate-pop text-sm md:text-base";
+        notif.innerText = msg;
+        document.body.appendChild(notif);
+        setTimeout(() => notif.remove(), 3500);
+      }
+
+      // Initial render on window load
+      window.onload = function () {
+        renderView();
+      };
+    </script>
+  </body>
+</html>
